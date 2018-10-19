@@ -121,11 +121,28 @@
     <h2>Embrace my methane powered cuddles!</h2>
     <h4>(you know who you are)</h4>
   </div>
+  <audio id="audio-1" src="audio/fart1.mp3" type="audio/mp3"></audio>
+  <audio id="audio-2" src="audio/fart2.mp3" type="audio/mp3"></audio>
+  <audio id="audio-3" src="audio/fart3.mp3" type="audio/mp3"></audio>
+  <audio id="audio-4" src="audio/fart4.mp3" type="audio/mp3"></audio>
+  <audio id="audio-5" src="audio/fart5.mp3" type="audio/mp3"></audio>
 
   <script>
-    // All of this learnt from: https://www.clicktorelease.com/blog/how-to-make-clouds-with-css-3d/
-    // Credits to them for blog post! This website was made just for fun! :)
-    window._fart = {};
+    // All of the cloud effects learnt from: https://www.clicktorelease.com/blog/how-to-make-clouds-with-css-3d/
+    // Credits to them for blog post!
+
+    // All sound files from http://soundbible.com (thank you) under Attribution 3.0 license: https://creativecommons.org/licenses/by/3.0/us/ and created and owned
+    // by their creators (again, thank you!)
+
+    // This website was made just for fun! :)
+
+    window._fart = {
+      allowAudioPlay: true
+    };
+
+    function randBetween(min, max) {
+      return min + (Math.random() * (max - min));
+    }
 
     function setupListeners() {
       window._fart.worldNode = document.getElementById('world');
@@ -149,16 +166,33 @@
         window._fart.worldNode.style.webkitTransform = transform;
         window._fart.worldNode.style.oTransform = transform;
       }
+
+      window.addEventListener('click', function (e) {
+        if (!window._fart.allowAudioPlay) {
+          return;
+        }
+
+        const nodeIdx = Math.floor(randBetween(0, window._fart.audioNodes.length));
+        const audioNode = window._fart.audioNodes[nodeIdx];
+        audioNode.play();
+        window._fart.allowAudioPlay = false;
+      });
+
+      window._fart.audioNodes = document.querySelectorAll('audio');
+      const clips = window._fart.audioNodes.length;
+      for (let i = 0; i < clips; ++i) {
+        const audioNode = window._fart.audioNodes[i];
+        audioNode.addEventListener('ended', function (e) {
+          window._fart.allowAudioPlay = true;
+        });
+      }
+
     }
 
     function setupClouds() {
 
       window._fart.objects = [];
       window._fart.layers = [];
-
-      function randBetween(min, max) {
-        return min + (Math.random() * (max - min));
-      }
 
       function generate() {
 
@@ -258,6 +292,7 @@
     setupClouds();
     updateClouds();
   </script>
+
 </body>
 
 </html>
