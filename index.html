@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,8 +16,14 @@
 
     body {
       margin: 0;
-      padding: 0 10px;
+      padding: 0;
       font-family: 'Josefin Slab', serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     .centered {
@@ -41,13 +48,216 @@
       font-style: italic;
       font-weight: 200;
     }
+
+    #viewport {
+      overflow: hidden;
+      perspective: 400px;
+      -webkit-perspective: 400px;
+      -moz-perspective: 400px;
+      -o-perspective: 400px;
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      left: 0;
+    }
+
+    #world {
+      position: absolute;
+      height: 512px;
+      width: 512px;
+      margin-left: -256px;
+      margin-top: -256px;
+      left: 50%;
+      top: 50%;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+		  -moz-transform-style: preserve-3d;
+		  -o-transform-style: preserve-3d;
+    }
+
+    #world div {
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+		  -moz-transform-style: preserve-3d;
+		  -o-transform-style: preserve-3d;
+    }
+
+    .cloud-base {
+      height: 20px;
+      width: 20px;
+      margin-left: -10px;
+      margin-top: -10px;
+      left: 256px;
+      top: 256px;
+      position: absolute;
+    }
+
+    .cloud-layer {
+      height: 256px;
+      width: 256px;
+      margin-left: -128px;
+      margin-top: -128px;
+      left: 50%;
+      top: 50%;
+      position: absolute;
+      transition: opacity .5s ease-out;
+      -webkit-transition: opacity .5s ease-out;
+      -moz-transition: opacity .5s ease-out;
+      -o-transition: opacity .5s ease-out;
+      opacity: 0;
+    }
   </style>
 </head>
+
 <body>
+  <div id="viewport">
+    <div id="world">
+
+    </div>
+  </div>
   <div class="centered">
     <h1>Hello!</h1>
     <h2>Embrace my methane powered cuddles!</h2>
     <h4>(you know who you are)</h4>
   </div>
+
+  <script>
+    // All of this learnt from: https://www.clicktorelease.com/blog/how-to-make-clouds-with-css-3d/
+    // Credits to them for blog post! This website was made just for fun! :)
+    window._fart = {};
+
+    function setupListeners() {
+      window._fart.worldNode = document.getElementById('world');
+      window._fart.viewportNode = document.getElementById('viewport');
+      window._fart.worldXAngle = 0;
+      window._fart.worldYAngle = 0;
+
+      window.addEventListener('mousemove', function (e) {
+
+        window._fart.worldYAngle = -(.5 - (e.clientX / window.innerWidth)) * 180;
+        window._fart.worldXAngle = (.5 - (e.clientY / window.innerHeight)) * 180;
+        updateView();
+
+      });
+
+      function updateView() {
+
+        const transform = 'translateZ(0px ) rotateX( ' + window._fart.worldXAngle + 'deg) rotateY( ' + window._fart.worldYAngle + 'deg)';
+        window._fart.worldNode.style.transform = transform;
+        window._fart.worldNode.style.mozTransform = transform;
+        window._fart.worldNode.style.webkitTransform = transform;
+        window._fart.worldNode.style.oTransform = transform;
+      }
+    }
+
+    function setupClouds() {
+
+      window._fart.objects = [];
+      window._fart.layers = [];
+
+      function randBetween(min, max) {
+        return min + (Math.random() * (max - min));
+      }
+
+      function generate() {
+
+        for (let j = 0; j < 5; ++j) {
+          window._fart.objects.push(createCloud());
+        }
+
+      }
+
+      function createCloud() {
+
+        function adjustOpacity(img) {
+
+          img.addEventListener( 'load', function() {
+				    img.style.opacity = .8;
+			    });
+        }
+
+        const div = document.createElement('div');
+
+        const maxWidth = window.innerWidth - 20; // provide 20 px margin on either end.
+        const maxHeight = window.innerHeight - 20; // provide 20 px margin on either end.
+
+        const randX = randBetween(-400, 400);
+        const randY = randBetween(-400, 400);
+        const randZ = randBetween(30, 130);
+
+        div.className = 'cloud-base';
+        const baseTransform = 'translateX( ' + randX + 'px ) translateY( ' + randY + 'px ) translateZ( ' + randZ + 'px )';
+        div.style.transform = baseTransform;
+        div.style.webkitTransform = baseTransform;
+        div.style.oTransform = baseTransform;
+        div.style.mozTransform = baseTransform;
+        window._fart.worldNode.appendChild(div);
+
+        const cloudLayers = 5 + Math.floor(Math.random() * 11);
+        for (let j = 0; j < cloudLayers; j++) {
+          const cloud = document.createElement('img');
+          cloud.src = 'img/cloud-texture.png';
+          cloud.className = 'cloud-layer';
+          adjustOpacity(cloud);
+
+          const randX = randBetween(-50, 50);
+          const randY = randBetween(-50, 50);
+          const randZ = randBetween(-50, 50);
+          const angle = randBetween(0, 360);
+          const scale = randBetween(0.3, 1.20);
+          const speed = 0.1 * Math.random();
+
+
+          cloud.data = {
+            x: randX,
+            y: randY,
+            z: randZ,
+            a: angle,
+            s: scale,
+            speed: speed
+          };
+          const layerTransform = 'translateX( ' + randX + 'px ) translateY( ' + randY + 'px ) translateZ( ' + randZ + 'px ) rotateZ( ' + angle + 'deg ) scale( ' + scale + ' )';
+          cloud.style.transform = layerTransform;
+          cloud.style.webkitTransform = layerTransform;
+          cloud.style.oTransform = layerTransform;
+          cloud.style.mozTransform = layerTransform;
+
+          div.appendChild(cloud);
+          window._fart.layers.push(cloud);
+        }
+
+        return div;
+
+      }
+
+      generate();
+
+    }
+
+    function updateClouds() {
+      const layers = window._fart.layers;
+      const arrLen = layers.length;
+      for (var j = 0; j < arrLen; ++j) {
+        var cloud = layers[j];
+        cloud.data.a += cloud.data.speed;
+        const reverseX = -window._fart.worldXAngle;
+        const reverseY = -window._fart.worldYAngle;
+        const layerTransform = 'translateX( ' + cloud.data.x + 'px ) translateY( ' + cloud.data.y + 'px ) translateZ( ' + cloud.data.z + 'px ) rotateY( ' + reverseY + 'deg ) rotateX( ' + reverseX + 'deg ) rotateZ( ' + cloud.data.a + 'deg ) scale( ' + cloud.data.s + ')';
+        cloud.style.transform = layerTransform;
+        cloud.style.webkitTransform = layerTransform;
+        cloud.style.oTransform = layerTransform;
+        cloud.style.mozTransform = layerTransform;
+      }
+
+      requestAnimationFrame(updateClouds);
+
+    }
+
+    setupListeners();
+    setupClouds();
+    updateClouds();
+  </script>
 </body>
+
 </html>
